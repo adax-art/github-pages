@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaneki vs CCG</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+        }
+
+        canvas {
+            background-image: url('tlo.jpg');
+            background-size: cover;
+            display: block;
+            margin: 0 auto;
+            width: 800px; /* Stała szerokość */
+            height: 600px; /* Stała wysokość */
+        }
+
+        h1 {
+            font-size: 2em;
+            margin: 10px;
+            color: white;
+        }
+
+        p {
+            font-size: 1.2em;
+            color: white;
+        }
+
+        #score {
+            font-size: 1.5em;
+            margin-top: 20px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Kaneki vs CCG</h1>
+    <p>Unikaj Suzuya!</p>
+    <p id="score">Punkty: 0</p>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let kanekiX = 100, kanekiY = 300;
+        const kanekiWidth = 50, kanekiHeight = 50;
+        let ccgX = 500, ccgY = 300;
+        const ccgWidth = 50, ccgHeight = 50;
+        let isGameOver = false;
+        let points = 0;
+        let ccgSpeed = 1;
+        let gameDuration = 0;
+        let lastUpdateTime = Date.now();
+        let startTime = Date.now();
+
+        const collisionSound = new Audio('collision.mp3'); // Ścieżka do pliku dźwiękowego kolizji
+
+        const kanekiImage = new Image();
+        kanekiImage.src = 'kaneki.jpg'; // Ścieżka do zdjęcia Kanekiego
+
+        const suzuyaImage = new Image();
+        suzuyaImage.src = 'suzuya.jpg'; // Ścieżka do zdjęcia Suzuya
+
+        function drawKaneki() {
+            ctx.drawImage(kanekiImage, kanekiX, kanekiY, kanekiWidth, kanekiHeight);
+        }
+
+        function drawCCG() {
+            ctx.drawImage(suzuyaImage, ccgX, ccgY, ccgWidth, ccgHeight);
+        }
+
+        function drawScore() {
+            document.getElementById('score').innerText = `Punkty: ${points}`;
+        }
+
+        function checkCollision() {
+            if (
+                kanekiX < ccgX + ccgWidth &&
+                kanekiX + kanekiWidth > ccgX &&
+                kanekiY < ccgY + ccgHeight &&
+                kanekiY + kanekiHeight > ccgY
+            ) {
+                collisionSound.play();
+                isGameOver = true;
+                alert("Game Over! Kaneki zderzył się z Suzuya!");
+                resetGame();
+            }
+        }
+
+        function resetGame() {
+            kanekiX = 100;
+            kanekiY = 300;
+            ccgX = 500;
+            ccgY = 300;
+            ccgSpeed = 1;
+            points = 0;
+            gameDuration = 0;
+            lastUpdateTime = Date.now();
+            startTime = Date.now();
+            isGameOver = false;
+            gameLoop();
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (isGameOver) return;
+
+            drawKaneki();
+            drawCCG();
+            drawScore();
+            checkCollision();
+
+            let currentTime = Date.now();
+            if (currentTime - lastUpdateTime >= 1000) {
+                points++;
+                lastUpdateTime = currentTime;
+            }
+
+            let elapsedTime = (currentTime - startTime) / 1000;
+            ccgSpeed = 1 + Math.floor(elapsedTime / 10);
+
+            if (ccgX < kanekiX) {
+                ccgX += ccgSpeed;
+            } else if (ccgX > kanekiX) {
+                ccgX -= ccgSpeed;
+            }
+            if (ccgY < kanekiY) {
+                ccgY += ccgSpeed;
+            } else if (ccgY > kanekiY) {
+                ccgY -= ccgSpeed;
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        canvas.addEventListener("mousemove", function(event) {
+            const rect = canvas.getBoundingClientRect();
+            kanekiX = event.clientX - rect.left - kanekiWidth / 2;
+            kanekiY = event.clientY - rect.top - kanekiHeight / 2;
+        });
+
+        gameLoop();
+    </script>
+</body>
+</html>
